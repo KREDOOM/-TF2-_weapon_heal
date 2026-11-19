@@ -1,0 +1,9 @@
+"Patch"
+{
+	include "materials\models\player\medic\medic_red_hands.vmt"
+
+	insert
+	{
+		"$basetexture" "models\player\medic\blue\medic_blue_hands"
+	}
+}

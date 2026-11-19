@@ -1,0 +1,43 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models\player\medic\red\medic_red_hands"
+	"$bumpmap" "models\player\medic\medic_normal_hands"
+
+	// Phong paramaters
+	"$phong" "1"
+	"$phongdisablehalflambert" "1"
+	"$phongexponent" "5"
+	"$phongboost" ".4"
+	"$phongfresnelranges" "[.5 .5 10]"
+	"$basemapalphaphongmask" "1"
+	"$lightwarptexture" "models\player\engineer\engineer_hands_lightwarp"
+
+	// Rim lighting parameters
+	"$rimlight" "1"
+	"$rimlightexponent" "4"
+	"$rimlightboost" "2"
+
+	// Cloaking
+	"$cloakpassenabled" "1"
+
+	"Proxies"
+	{
+		"invis"
+		{
+		}
+		"ConVarEx"
+		{
+ 			"ConVar" "tf2c_player_nohalflambert"
+  			"0"
+  	  		{
+  	   			"$PhongDisableHalfLambert"  "0"
+  	   			"$LightWarpTexture"         "models\player\pyro\pyro_lightwarp"
+  	  		}
+  	 		"1"
+  	 		{
+  	 			"$PhongDisableHalfLambert"  "1"
+   				"$LightWarpTexture"         "models\player\pyro\lambert_lightwarp"
+  	 		}
+		}
+	}
+}

@@ -1,0 +1,7 @@
+"UnlitGeneric"
+{
+	"$basetexture"	"vgui/entities/weapon_tf2_medigun"
+	"$vertexcolor"	"1"
+	"$vertexalpha"	"1"
+	"$nolod"		"1"
+}

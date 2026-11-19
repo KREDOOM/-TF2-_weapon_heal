@@ -1,0 +1,58 @@
+"VertexLitGeneric"
+{
+	"$basetexture"	"models\weapons\v_medigun\v_medigun_front"
+	"$phongdisablehalflambert" "1"
+	"$phong" "1"
+	"$phongexponent" "5"
+	
+	"$phongboost" "3"	
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
+	"$phongfresnelranges"	"[.3 .5 3]"
+
+	"$basephongexponent" "5"
+	"$basephongboost" "5"
+
+	"$basemapalphaphongmask" "1"
+	
+	"$rimlight" "2"						
+	"$rimlightexponent" "20"				
+	"$rimlightboost" "1"
+
+	"$glowcolor" "1"
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+
+    "Proxies"
+    {
+        "ConVarEx"
+        {
+             "ConVar" "tf2c_player_nohalflambert"
+              "0"
+                {
+                     "$PhongDisableHalfLambert"  "0"
+                }
+               "1"
+               {
+                   "$PhongDisableHalfLambert"  "1"
+               }
+        }
+		"invis"
+		{
+		}
+		"ModelGlowColor"
+		{
+			"resultVar" "$glowcolor"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$selfillumtint"
+		}
+		"Equals"
+		{
+			"srcVar1"  "$glowcolor"
+			"resultVar" "$color2"
+		}
+	}
+}
