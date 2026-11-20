@@ -1,7 +1,6 @@
 "VertexLitGeneric"
 {
 	"$basetexture" "models\player\medic\red\medic_red_hands"
-	"$bumpmap" "models\player\medic\medic_normal_hands"
 
 	// Phong paramaters
 	"$phong" "1"
@@ -24,20 +23,6 @@
 	{
 		"invis"
 		{
-		}
-		"ConVarEx"
-		{
- 			"ConVar" "tf2c_player_nohalflambert"
-  			"0"
-  	  		{
-  	   			"$PhongDisableHalfLambert"  "0"
-  	   			"$LightWarpTexture"         "models\player\pyro\pyro_lightwarp"
-  	  		}
-  	 		"1"
-  	 		{
-  	 			"$PhongDisableHalfLambert"  "1"
-   				"$LightWarpTexture"         "models\player\pyro\lambert_lightwarp"
-  	 		}
 		}
 	}
 }

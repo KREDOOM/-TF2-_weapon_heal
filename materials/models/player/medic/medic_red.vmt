@@ -16,11 +16,6 @@
 	"$rimlightexponent" "4"
 	"$rimlightboost" "2"
 
-	// Burn overlay
-	"$detail" "effects\tiledfire\firelayeredslowtiled512"
-	"$detailscale" "5"
-	"$detailblendfactor" "0"
-	"$detailblendmode" "6"
 
 	// Cloaking
 	"$cloakpassenabled" "1"
@@ -29,30 +24,6 @@
 	{
 		"invis"
 		{
-		}
-		"AnimatedTexture"
-		{
-			"animatedtexturevar" "$detail"
-			"animatedtextureframenumvar" "$detailframe"
-			"animatedtextureframerate" "30"
-		}
-		"BurnLevel"
-		{
-			"resultVar" "$detailblendfactor"
-		}
-		"ConVarEx"
-		{
- 			"ConVar" "tf2c_player_nohalflambert"
-  			"0"
-  	  		{
-  	   			"$PhongDisableHalfLambert"  "0"
-  	   			"$LightWarpTexture"         "models\player\pyro\pyro_lightwarp"
-  	  		}
-  	 		"1"
-  	 		{
-  	 			"$PhongDisableHalfLambert"  "1"
-   				"$LightWarpTexture"         "models\player\pyro\lambert_lightwarp"
-  	 		}
 		}
 	}
 }
