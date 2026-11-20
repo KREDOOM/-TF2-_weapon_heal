@@ -1,0 +1,13 @@
+{
+	"title": "TF2 Medi Gun",
+	"type": "weapon",
+	"tags": [ "fun", "roleplay" ],
+	"ignore": [
+		"*.md",
+		"*.txt",
+		"*.psd",
+		"*.vcproj",
+		"*.svn*",
+		"addon.json"
+	]
+}

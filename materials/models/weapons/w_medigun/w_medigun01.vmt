@@ -28,18 +28,6 @@
 
     "Proxies"
     {
-        "ConVarEx"
-        {
-             "ConVar" "tf2c_player_nohalflambert"
-              "0"
-                {
-                     "$PhongDisableHalfLambert"  "0"
-                }
-               "1"
-               {
-                   "$PhongDisableHalfLambert"  "1"
-               }
-        }
 		"invis"
 		{
 		}
