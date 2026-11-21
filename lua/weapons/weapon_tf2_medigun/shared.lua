@@ -108,13 +108,21 @@ SWEP.UberDuration = 8
 -- Не лечить сквозь стены: пересчёт видимости цели не чаще раза в 0.1 с
 SWEP.LOSCheckInterval = 0.1
 
-SWEP.HealSoundPath = "weapons/medigun_heal.wav"
+-- Оригинальный medigun_heal.wav состоит из двух частей:
+--   0.0–3.0 c — «включение» пушки (нарастание и спад), играется ОДИН раз;
+--   3.0–4.0 c — ровный гул, у которого в самом файле TF2 стоит cue-точка на 3.0 c.
+-- Поэтому «включение» вырезано в отдельный файл, а из хвоста сделан
+-- medigun_heal_loop.wav с loop-точками (smpl + cue) — движок крутит ровный
+-- гул сам, без слышимых перезапусков.
+SWEP.HealStartSoundPath = "weapons/medigun_heal_start.wav"
+SWEP.HealLoopSoundPath  = "weapons/medigun_heal_loop.wav"
+SWEP.HealStartDuration  = 3.0    -- длина «включения», после неё вступает луп
 SWEP.DetachSoundPath = "weapons/medigun_heal_detach.wav"
 SWEP.NoTargetSoundPath = "weapons/medigun_no_target.wav"
 SWEP.ChargedSoundPath = "weapons/medigun_charged.wav"
 
--- Пути нужны для CreateSound (циклы), короткие алиасы — для EmitSound.
-SWEP.Primary.Sound = SWEP.HealSoundPath
+-- Пути нужны для CreateSound, короткие алиасы — для EmitSound.
+SWEP.Primary.Sound = SWEP.HealStartSoundPath
 SWEP.DetachSound = SWEP.DetachSoundPath
 SWEP.NoTargetSound = SWEP.NoTargetSoundPath
 SWEP.UberSound = SWEP.ChargedSoundPath
@@ -383,9 +391,9 @@ function SWEP:StopChargedSound()
 	end
 end
 
--- Непрерывный звук лечения. Файл medigun_heal.wav не содержит loop-точек,
--- поэтому обычный EmitSound обрывался через 4 секунды — держим CSoundPatch
--- и перезапускаем его, пока лечение активно.
+-- Звук лечения: однократное «включение» + бесконечный цикл ровного участка.
+-- В medigun_heal_loop.wav прописаны loop-точки (smpl/cue), поэтому движок
+-- крутит его сам — никаких перезапусков и слышимых «включений» заново.
 function SWEP:StartHealSound()
 	if not SERVER then return end
 	if self.HealSoundPlaying then return end
@@ -394,22 +402,61 @@ function SWEP:StartHealSound()
 	if not IsValid(owner) then return end
 
 	self.HealSoundPlaying = true
-	self:PlayHealSoundLoop()
+	self.IsHealSoundStarting = true
 
-	-- medigun_heal.wav ≈ 4.0 c и без loop-точек: перезапускаем чуть раньше,
-	-- чтобы звук не прерывался, пока игрок держит ЛКМ.
-	local timerName = "TF2_MedigunHealLoop" .. self:EntIndex()
-	timer.Create(timerName, 3.9, 0, function()
+	-- 1. «Включение» пушки — однократно
+	self.HealStartPatch = CreateSound(owner, self.HealStartSoundPath)
+	if self.HealStartPatch then
+		self.HealStartPatch:Play()
+		self.HealStartPatch:ChangeVolume(self:GetHealVolume(), 0)
+	end
+
+	-- 2. Ровный гул вступает там, где «включение» закончилось — стык
+	--    совпадает по фазе, поэтому переход не слышен.
+	--    Таймер именованный: StopHealing его снимает, чтобы старое лечение
+	--    не запускало луп поверх нового.
+	local timerName = "TF2_MedigunHealStart" .. self:EntIndex()
+	timer.Create(timerName, self.HealStartDuration, 1, function()
 		if not IsValid(self) then
 			timer.Remove(timerName)
 			return
 		end
+		self.IsHealSoundStarting = false
 		if self.HealSoundPlaying and self:GetNWBool("MG_Healing", false) then
 			self:PlayHealSoundLoop()
-		else
-			timer.Remove(timerName)
 		end
 	end)
+end
+
+-- Сторож: поднимает луп, если он перестал играть (телепорт, смена карты,
+-- патч не подхватил loop-точки). Опрашиваем IsPlaying лишь раз в секунду,
+-- чтобы не создавать патч каждый тик.
+function SWEP:UpdateHealSoundWatchdog()
+	if not SERVER then return end
+	if not self.HealSoundPlaying or self.IsHealSoundStarting then return end
+	if not self:GetNWBool("MG_Healing", false) then return end
+
+	local curTime = CurTime()
+	if curTime < (self.NextHealSoundCheck or 0) then return end
+	self.NextHealSoundCheck = curTime + 1
+
+	if not self.HealSoundPatch or not self.HealSoundPatch:IsPlaying() then
+		self:PlayHealSoundLoop()
+	end
+end
+
+function SWEP:GetHealVolume()
+	return self:GetNWBool("MG_UberActive", false) and 0.5 or 0.8
+end
+
+function SWEP:ApplyHealVolume(fadeTime)
+	local volume = self:GetHealVolume()
+	if self.HealStartPatch then
+		self.HealStartPatch:ChangeVolume(volume, fadeTime or 0)
+	end
+	if self.HealSoundPatch then
+		self.HealSoundPatch:ChangeVolume(volume, fadeTime or 0)
+	end
 end
 
 function SWEP:PlayHealSoundLoop()
@@ -418,6 +465,9 @@ function SWEP:PlayHealSoundLoop()
 		self:StopHealing()
 		return
 	end
+
+	-- «Включение» больше не нужно — оно уже отыграло
+	self.IsHealSoundStarting = false
 
 	local owner = self:GetOwner()
 	if not IsValid(owner) then
@@ -429,10 +479,10 @@ function SWEP:PlayHealSoundLoop()
 		self.HealSoundPatch:Stop()
 	end
 
-	self.HealSoundPatch = CreateSound(owner, self.HealSoundPath)
+	self.HealSoundPatch = CreateSound(owner, self.HealLoopSoundPath)
 	if self.HealSoundPatch then
 		self.HealSoundPatch:Play()
-		self.HealSoundPatch:ChangeVolume(self:GetNWBool("MG_UberActive", false) and 0.5 or 0.8, 0)
+		self.HealSoundPatch:ChangeVolume(self:GetHealVolume(), 0)
 	end
 end
 
@@ -473,11 +523,21 @@ function SWEP:Holster()
 end
 
 function SWEP:StopHealing()
+	timer.Remove("TF2_MedigunHealStart" .. self:EntIndex())
+
+	if self.HealStartPatch then
+		self.HealStartPatch:Stop()
+		self.HealStartPatch = nil
+	end
+
 	if self.HealSoundPatch then
 		self.HealSoundPatch:Stop()
 		self.HealSoundPatch = nil
 	end
+
 	self.HealSoundPlaying = false
+	self.IsHealSoundStarting = false
+	self.NextHealSoundCheck = 0
 
 	if CLIENT then
 		self:StopClientBeam()
@@ -610,12 +670,14 @@ function SWEP:ActivateUberCharge()
 		self:UpdateUberTarget(target)
 	end
 
-	-- Под убером звук лечения тише (главный звук — убер)
+	-- Под убером звук лечения тише (главный звук теперь — убер).
+	-- GetHealVolume() уже учитывает MG_UberActive, поэтому достаточно
+	-- пересчитать громкость у тех патчей, что сейчас играют.
 	if wasHealing then
 		if not self.HealSoundPlaying then
 			self:StartHealSound()
-		elseif self.HealSoundPatch then
-			self.HealSoundPatch:ChangeVolume(0.5, 0.2)
+		else
+			self:ApplyHealVolume(0.2)
 		end
 	end
 
@@ -695,6 +757,8 @@ function SWEP:Think()
 	end
 
 	if isHealing then
+		self:UpdateHealSoundWatchdog()
+
 		local target = self:GetNWEntity("MG_HealTarget", NULL)
 		local targetValid = IsValid(target) and target:Health() > 0
 		local tooFar = targetValid and owner:EyePos():Distance(target:GetPos()) > (self.HealRange * 1.15)
@@ -753,7 +817,6 @@ function SWEP:Think()
 end
 
 function SWEP:OnRemove()
-	timer.Remove("TF2_MedigunHealLoop" .. self:EntIndex())
 	self:StopChargedSound()
 
 	if CLIENT then
