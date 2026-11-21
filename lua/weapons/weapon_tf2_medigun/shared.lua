@@ -38,11 +38,6 @@ if CLIENT then
 	-- Кешируем текстуру прицела: GetTextureID каждый кадр — лишняя работа
 	MG_CrosshairTexture = surface.GetTextureID("sprites/crosshair_4")
 
-	-- Прекеш моделей оружия (раньше они не прекешились и на первом
-	-- спавне мигали «шашечками»)
-	util.PrecacheModel(SWEP.ViewModel)
-	util.PrecacheModel(SWEP.WorldModel)
-
 	surface.CreateFont("MedigunHUDSmall", {
 		font = "Trebuchet MS",
 		size = 16,
@@ -76,6 +71,16 @@ SWEP.AdminOnly = false
 SWEP.ViewModelFOV = 65
 SWEP.ViewModel = "models/weapons/v_models/v_medigun_medic.mdl"
 SWEP.WorldModel = "models/weapons/w_models/w_medigun.mdl"
+
+-- Прекеш моделей оружия. Важно: вызывать строго ПОСЛЕ присвоения
+-- SWEP.ViewModel / SWEP.WorldModel — в блоке CLIENT выше они ещё nil,
+-- из-за чего util.PrecacheModel падал с "string expected, got nil".
+for _, modelPath in ipairs({ SWEP.ViewModel, SWEP.WorldModel }) do
+	if isstring(modelPath) and modelPath ~= "" then
+		util.PrecacheModel(modelPath)
+	end
+end
+
 SWEP.ViewModelFlip = false
 SWEP.BobScale = 1
 SWEP.SwayScale = 0
